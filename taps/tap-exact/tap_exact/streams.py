@@ -1300,23 +1300,31 @@ class ReportingBalanceStream(ExactStream):
 
     schema = th.PropertiesList(
         th.Property("ID", th.StringType),
-        th.Property("Amount", th.NumberType),
-        th.Property("AmountCredit", th.NumberType),
-        th.Property("AmountDebit", th.NumberType),
+        th.Property("Amount", th.CustomType({"type": ["number", "string"]})),
+        th.Property(
+            "AmountCredit", th.CustomType({"type": ["number", "string"]})
+        ),
+        th.Property(
+            "AmountDebit", th.CustomType({"type": ["number", "string"]})
+        ),
         th.Property("BalanceType", th.StringType),
         th.Property("CostCenterCode", th.StringType),
         th.Property("CostCenterDescription", th.StringType),
         th.Property("CostUnitCode", th.StringType),
         th.Property("CostUnitDescription", th.StringType),
-        th.Property("Count", th.NumberType),
-        th.Property("Division", th.NumberType),
+        th.Property("Count", th.CustomType({"type": ["number", "string"]})),
+        th.Property("Division", th.CustomType({"type": ["number", "string"]})),
         th.Property("GLAccount", th.StringType),
         th.Property("GLAccountCode", th.StringType),
         th.Property("GLAccountDescription", th.StringType),
-        th.Property("ReportingPeriod", th.NumberType),
-        th.Property("ReportingYear", th.NumberType),
-        th.Property("Status", th.NumberType),
-        th.Property("Type", th.NumberType),
+        th.Property(
+            "ReportingPeriod", th.CustomType({"type": ["number", "string"]})
+        ),
+        th.Property(
+            "ReportingYear", th.CustomType({"type": ["number", "string"]})
+        ),
+        th.Property("Status", th.CustomType({"type": ["number", "string"]})),
+        th.Property("Type", th.CustomType({"type": ["number", "string"]})),
     ).to_dict()
 
     @property

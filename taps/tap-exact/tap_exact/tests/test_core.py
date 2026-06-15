@@ -4,6 +4,7 @@ import datetime
 import json
 from pathlib import Path
 
+import jsonschema
 from singer_sdk.testing import get_standard_tap_tests
 
 Path("config.json").write_text(json.dumps({"sync_endpoints": False}))
@@ -76,6 +77,36 @@ def test_reporting_balance_stream_is_discovered_with_all_documented_fields():
     assert stream.replication_key is None
     assert stream.select.split(",") == expected_fields
     assert list(stream.schema["properties"].keys()) == expected_fields
+
+
+def test_reporting_balance_accepts_exact_stringified_numeric_fields():
+    """Exact can return ReportingBalance numeric fields as strings."""
+    tap = TapExact(config=SAMPLE_CONFIG)
+    stream = next(
+        stream for stream in tap.discover_streams() if stream.name == "reporting_balance"
+    )
+    record = {
+        "ID": "balance-row-1",
+        "Amount": "58700",
+        "AmountCredit": "0",
+        "AmountDebit": "58700",
+        "BalanceType": "B",
+        "CostCenterCode": None,
+        "CostCenterDescription": None,
+        "CostUnitCode": None,
+        "CostUnitDescription": None,
+        "Count": "1",
+        "Division": "123456",
+        "GLAccount": "00000000-0000-0000-0000-000000000000",
+        "GLAccountCode": "1000",
+        "GLAccountDescription": "Balance account",
+        "ReportingPeriod": "1",
+        "ReportingYear": "2026",
+        "Status": "20",
+        "Type": "10",
+    }
+
+    jsonschema.validate(record, stream.schema)
 
 
 # TODO: Create additional tests as appropriate for your tap.
