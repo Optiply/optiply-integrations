@@ -31,6 +31,18 @@ def test_standard_tap_tests():
         test()
 
 
+def test_hotglue_minimal_discover_config_does_not_require_warehouse_lookup():
+    """HotGlue discover only passes base config, so stream construction must be offline."""
+    tap = TapExact(
+        config={"start_date": "2010-01-01T00:00:00Z", "sync_endpoints": True},
+        validate_config=False,
+    )
+
+    stream_names = [stream.name for stream in tap.discover_streams()]
+
+    assert "reporting_balance" in stream_names
+
+
 def test_reporting_balance_stream_is_discovered_with_all_documented_fields():
     """Validate ReportingBalance discovery metadata without live Exact auth."""
     tap = TapExact(config=SAMPLE_CONFIG)

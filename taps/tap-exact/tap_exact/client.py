@@ -35,9 +35,7 @@ class ExactStream(RESTStream):
         path: Optional[str] = None,
     ) -> None:
         super().__init__(tap, name=name, schema=schema, path=path)
-        if not self.config.get("warehouse_uuid"):
-            self.default_warehouse_uuid
-        else:
+        if self.config.get("warehouse_uuid"):
             self._tap.warehouse_uuid = self.config.get("warehouse_uuid")
 
     dont_use_current_division = False
