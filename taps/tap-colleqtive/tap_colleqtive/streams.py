@@ -84,9 +84,9 @@ class ColleqtiveStream(Stream):
             if replication_value:
                 params[self.replication_key] = replication_value
 
-        store_number = self.config.get("store_number")
-        if store_number:
-            params["store_number"] = store_number
+        #store_number = self.config.get("store_number")
+        #if store_number:
+        #    params["store_number"] = store_number
 
         return params
 
