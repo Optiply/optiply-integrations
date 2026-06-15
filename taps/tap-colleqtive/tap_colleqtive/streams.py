@@ -118,6 +118,7 @@ class ColleqtiveStream(Stream):
             record[self.replication_key] = (
                 row.get("last_modified_date")
                 or row.get("last_stock_modified_datetime")
+                or row.get("most_likely_datetime")
                 or row.get("updated_on")
                 or row.get("datetime_created")
             )
@@ -186,11 +187,18 @@ class StocksStream(ColleqtiveStream):
 
     name = "stocks"
     path = "/api/v2/public/storeproducts/stock"
-    primary_keys = ["store_number", "product_number"]
+    primary_keys = ["id"]
     replication_key = "last_stock_modified_datetime"
     replication_method = "INCREMENTAL"
     records_key = "list"
     schema_fields = STOCK_FIELDS
+    json_string_fields = {
+        "ordering_datetimes",
+        "delivery_datetimes",
+        "forecast_array",
+        "history_array",
+        "average_array",
+    }
     schema = _field_schema(schema_fields)
 
 

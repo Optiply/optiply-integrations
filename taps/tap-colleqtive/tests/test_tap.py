@@ -97,19 +97,39 @@ class TapColleqtiveTests(unittest.TestCase):
         self.assertNotIn("reason_code", params)
         self.assertNotIn("to_modified_date", params)
 
-    def test_stocks_uses_last_stock_modified_datetime_replication_key(self):
+    def test_stocks_uses_actual_stock_response_schema_and_bookmark_alias(self):
         tap = TapColleqtive(config=minimal_config())
         stream = StocksStream(tap=tap)
 
         record = stream._normalize_record({
-            "store_number": "S1",
-            "product_number": "P1",
-            "last_stock_modified_datetime": "2026-04-01T12:00:00Z",
-            "stock": 5,
+            "id": 6191,
+            "store_number": "3101",
+            "product_number": "4250435790540",
+            "category_code": "wc-cat-170",
+            "category_name": "The Bastard accessoires",
+            "product_description": "Gietijzeren steelpan met deksel Petromax - 2 Liter",
+            "most_likely_quantity": 0.0,
+            "most_likely_datetime": "2026-06-15T06:30:37.8",
+            "most_likely_pool_1": 0.0,
+            "forecast_array": [{"period": 1, "quantity": 2}],
+            "barcode": "4250435790540",
+            "is_stock": True,
+            "is_replenishment": False,
         })
 
-        self.assertEqual(record["last_stock_modified_datetime"], "2026-04-01T12:00:00Z")
-        self.assertEqual(record["stock"], 5)
+        self.assertEqual(record["id"], 6191)
+        self.assertEqual(record["category_name"], "The Bastard accessoires")
+        self.assertEqual(record["most_likely_quantity"], 0.0)
+        self.assertEqual(record["most_likely_pool_1"], 0.0)
+        self.assertEqual(record["is_stock"], True)
+        self.assertEqual(record["is_replenishment"], False)
+        self.assertEqual(
+            record["last_stock_modified_datetime"],
+            "2026-06-15T06:30:37.8",
+        )
+        self.assertEqual(record["forecast_array"], "[{\"period\": 1, \"quantity\": 2}]")
+        self.assertNotIn("stock", record)
+        self.assertNotIn("quantity", record)
 
     def test_orders_stringifies_counting_lines_remaining_stockpool(self):
         tap = TapColleqtive(config=minimal_config())
