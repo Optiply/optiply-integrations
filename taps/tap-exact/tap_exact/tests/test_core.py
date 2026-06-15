@@ -1,0 +1,69 @@
+"""Tests standard tap features using the built-in SDK tests library."""
+
+import datetime
+import json
+from pathlib import Path
+
+from singer_sdk.testing import get_standard_tap_tests
+
+Path("config.json").write_text(json.dumps({"sync_endpoints": False}))
+
+from tap_exact.tap import TapExact
+
+SAMPLE_CONFIG = {
+    "refresh_token": "test-refresh-token",
+    "client_id": "test-client-id",
+    "client_secret": "test-client-secret",
+    "current_division": "123456",
+    "use_stock_multiple_warehouses": True,
+    "start_date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
+}
+
+
+# Run standard built-in tap tests from the SDK:
+def test_standard_tap_tests():
+    """Run standard tap tests from the SDK."""
+    tests = get_standard_tap_tests(TapExact, config=SAMPLE_CONFIG)
+    for test in tests:
+        if test.__name__ == "_test_stream_connections":
+            # Avoid live Exact OAuth calls in unit tests.
+            continue
+        test()
+
+
+def test_reporting_balance_stream_is_discovered_with_all_documented_fields():
+    """Validate ReportingBalance discovery metadata without live Exact auth."""
+    tap = TapExact(config=SAMPLE_CONFIG)
+    stream = next(
+        stream for stream in tap.discover_streams() if stream.name == "reporting_balance"
+    )
+
+    expected_fields = [
+        "ID",
+        "Amount",
+        "AmountCredit",
+        "AmountDebit",
+        "BalanceType",
+        "CostCenterCode",
+        "CostCenterDescription",
+        "CostUnitCode",
+        "CostUnitDescription",
+        "Count",
+        "Division",
+        "GLAccount",
+        "GLAccountCode",
+        "GLAccountDescription",
+        "ReportingPeriod",
+        "ReportingYear",
+        "Status",
+        "Type",
+    ]
+
+    assert stream.path == "/financial/ReportingBalance"
+    assert stream.primary_keys == ["ID"]
+    assert stream.replication_key is None
+    assert stream.select.split(",") == expected_fields
+    assert list(stream.schema["properties"].keys()) == expected_fields
+
+
+# TODO: Create additional tests as appropriate for your tap.
