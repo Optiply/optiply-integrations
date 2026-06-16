@@ -1297,6 +1297,7 @@ class Deleted(ExactSyncStream):
 class ReportingBalanceStream(ExactStream):
     name = "reporting_balance"
     primary_keys = ["ID"]
+    replication_key = "ID"
 
     schema = th.PropertiesList(
         th.Property("ID", th.StringType),
@@ -1341,10 +1342,16 @@ class ReportingBalanceStream(ExactStream):
         )
 
     def get_url_params(self, context, next_page_token):
-        params = {"$select": self.select}
+        params = {"$select": self.select, "$orderby": "ID asc"}
+        filters = []
         reporting_year = self.config.get("reporting_balance_reporting_year")
         if reporting_year:
-            params["$filter"] = f"ReportingYear eq {reporting_year}"
+            filters.append(f"ReportingYear eq {reporting_year}")
+        last_id = self.get_context_state(context).get("replication_key_value")
+        if last_id:
+            filters.append(f"ID gt {last_id}")
+        if filters:
+            params["$filter"] = " and ".join(filters)
         if next_page_token:
             params["$skiptoken"] = next_page_token
         return params

@@ -74,9 +74,27 @@ def test_reporting_balance_stream_is_discovered_with_all_documented_fields():
 
     assert stream.path == "/financial/ReportingBalance"
     assert stream.primary_keys == ["ID"]
-    assert stream.replication_key is None
+    assert stream.replication_key == "ID"
     assert stream.select.split(",") == expected_fields
     assert list(stream.schema["properties"].keys()) == expected_fields
+
+
+def test_reporting_balance_stream_uses_id_cursor_params():
+    """ReportingBalance uses ID as a pragmatic pull-once cursor."""
+    tap = TapExact(
+        config={**SAMPLE_CONFIG, "reporting_balance_reporting_year": 2026}
+    )
+    stream = next(
+        stream for stream in tap.discover_streams() if stream.name == "reporting_balance"
+    )
+    stream.get_context_state = lambda context: {"replication_key_value": "12345"}
+
+    params = stream.get_url_params(context=None, next_page_token="page-token")
+
+    assert params["$select"] == stream.select
+    assert params["$orderby"] == "ID asc"
+    assert params["$filter"] == "ReportingYear eq 2026 and ID gt 12345"
+    assert params["$skiptoken"] == "page-token"
 
 
 def test_reporting_balance_accepts_exact_stringified_numeric_fields():
