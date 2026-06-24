@@ -157,7 +157,6 @@ class ColleqtiveStream(Stream):
 
 class ProductsStream(ColleqtiveStream):
     """Colleqtive products.
-
     FULL_TABLE because this endpoint does not expose last_modified_date in the
     request or response shape returned by the v2 public API.
     """
@@ -184,11 +183,10 @@ class ProductsStream(ColleqtiveStream):
 
 class StocksStream(ColleqtiveStream):
     """Colleqtive current stock."""
-
     name = "stocks"
     path = "/api/v2/public/storeproducts/stock"
     primary_keys = ["id"]
-    replication_key = "last_stock_modified_datetime"
+    replication_key = "most_likely_datetime"
     replication_method = "INCREMENTAL"
     records_key = "list"
     schema_fields = STOCK_FIELDS
@@ -201,10 +199,16 @@ class StocksStream(ColleqtiveStream):
     }
     schema = _field_schema(schema_fields)
 
+    def _request_params(self, context, page_start):
+        params = self._page_params(page_start)
+        replication_value = self._incremental_filter(context)
+        if replication_value:
+            params["last_stock_modified_datetime"] = replication_value
+        return params
+
 
 class OrdersStream(ColleqtiveStream):
     """Colleqtive order changes."""
-
     name = "orders"
     path = "/api/v2/public/products/stock/storeproductlogs"
     primary_keys = ["id"]
@@ -225,7 +229,6 @@ class OrdersStream(ColleqtiveStream):
 
 class BuyOrdersStream(ColleqtiveStream):
     """Colleqtive delivery buy orders."""
-
     name = "buy_orders"
     path = "/api/v2/public/orders/deliveries"
     primary_keys = ["order_number", "store_number"]
