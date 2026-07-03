@@ -296,6 +296,7 @@ class BuyOrders(VenditSink):
 
             if optiply_id:
                 item["optiplyId"] = str(optiply_id)
+                item["orderReference"] = str(optiply_id)
             
             # Add target supplier ID
             if target_supplier_id:
