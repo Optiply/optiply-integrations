@@ -120,13 +120,14 @@ class PrePurchaseOrders(VenditSink):
 
         price = _coerce_price(
             _first_present(
+                record.get("purchasePriceEx"),
                 record.get("unit_price"),
                 record.get("price"),
                 record.get("purchase_price"),
             )
         )
         if price is not None:
-            item["price"] = price
+            item["purchasePriceEx"] = price
 
         if optiply_id:
             item["optiplyId"] = str(optiply_id)
@@ -286,13 +287,14 @@ class BuyOrders(VenditSink):
 
             price = _coerce_price(
                 _first_present(
+                    line_item.get("purchasePriceEx"),
                     line_item.get("unit_price"),
                     line_item.get("price"),
                     line_item.get("purchase_price"),
                 )
             )
             if price is not None:
-                item["price"] = price
+                item["purchasePriceEx"] = price
 
             if optiply_id:
                 item["optiplyId"] = str(optiply_id)
