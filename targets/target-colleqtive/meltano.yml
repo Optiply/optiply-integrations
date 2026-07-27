@@ -1,0 +1,27 @@
+version: 1
+send_anonymous_usage_stats: true
+project_id: target-colleqtive
+plugins:
+  loaders:
+  - name: target-colleqtive
+    namespace: target_colleqtive
+    executable: target-colleqtive
+    capabilities:
+    - about
+    - stream-maps
+    settings:
+    - name: api_url
+    - name: token_url
+    - name: client_id
+    - name: client_secret
+      kind: password
+    - name: scope
+    - name: access_token
+      kind: password
+    - name: store_number
+    - name: default_supplier_name
+    - name: default_no_of_containers
+    - name: default_order_type
+    - name: default_target_stock_pool
+    - name: container_override
+    - name: request_timeout_seconds
