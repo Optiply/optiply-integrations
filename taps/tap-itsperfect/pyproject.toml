@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tap-itsperfect"
+version = "0.1.0"
+description = "Read-only ItsPerfect Singer tap for Optiply"
+authors = [{ name = "Optiply", email = "dev@optiply.com" }]
+requires-python = ">=3.9,<3.12"
+dependencies = [
+    "backoff>=1.8,<3",
+    "hotglue-singer-sdk",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+
+[project.scripts]
+tap = "tap_itsperfect.tap:TapItsPerfect.cli"
+tap-itsperfect = "tap_itsperfect.tap:TapItsPerfect.cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tap_itsperfect*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
