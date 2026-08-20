@@ -195,6 +195,8 @@ class SalesOrderLinesStream(ItsPerfectStream):
     def post_process(self, row: dict, context=None):
         assert context is not None
         row["sales_order_id"] = context["sales_order_id"]
+        if row.get("quantity") is not None:
+            row["quantity"] = str(row["quantity"])
         return row
 
 

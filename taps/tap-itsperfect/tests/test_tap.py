@@ -294,6 +294,15 @@ def test_child_identity_and_nested_schema_are_preserved():
     )
 
 
+def test_sales_order_line_quantity_matches_catalog_contract():
+    sales_lines = stream("sales_order_lines")
+    row = sales_lines.post_process(
+        {"id": 5, "quantity": 3},
+        {"sales_order_id": 3},
+    )
+    assert row == {"id": 5, "quantity": "3", "sales_order_id": 3}
+
+
 def test_purchase_and_put_lines_preserve_live_etl_fields():
     purchase_lines = stream("purchase_order_lines")
     assert "price_rcy" in purchase_lines.schema["properties"]
