@@ -7,9 +7,9 @@ from email.utils import parsedate_to_datetime
 from typing import Dict, List, Optional
 
 import requests
-from singer_sdk.exceptions import FatalAPIError
-from singer_sdk.plugin_base import PluginBase
-from target_hotglue.client import HotglueSink
+from hotglue_singer_sdk.exceptions import FatalAPIError
+from hotglue_singer_sdk.plugin_base import PluginBase
+from hotglue_singer_sdk.target_sdk.client import HotglueSink
 
 from target_colleqtive.auth import ColleqtiveAuthenticator
 

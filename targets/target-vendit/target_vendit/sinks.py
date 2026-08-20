@@ -3,7 +3,7 @@
 import json
 from datetime import datetime, timezone
 
-from singer_sdk.exceptions import FatalAPIError
+from hotglue_singer_sdk.exceptions import FatalAPIError
 from target_vendit.client import VenditSink
 
 

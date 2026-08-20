@@ -30,12 +30,12 @@ class _FakeVenditSink:
         self.payloads.append(record)
 
 
-singer_sdk = types.ModuleType("singer_sdk")
-singer_sdk_exceptions = types.ModuleType("singer_sdk.exceptions")
+singer_sdk = types.ModuleType("hotglue_singer_sdk")
+singer_sdk_exceptions = types.ModuleType("hotglue_singer_sdk.exceptions")
 singer_sdk_exceptions.FatalAPIError = type("FatalAPIError", (Exception,), {})
 singer_sdk.exceptions = singer_sdk_exceptions
-sys.modules["singer_sdk"] = singer_sdk
-sys.modules["singer_sdk.exceptions"] = singer_sdk_exceptions
+sys.modules["hotglue_singer_sdk"] = singer_sdk
+sys.modules["hotglue_singer_sdk.exceptions"] = singer_sdk_exceptions
 
 fake_client = types.ModuleType("target_vendit.client")
 fake_client.VenditSink = _FakeVenditSink

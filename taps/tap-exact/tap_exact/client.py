@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional
 
 import requests
 import xmltodict
@@ -16,10 +16,7 @@ import datetime
 import re
 from lxml import etree
 from singer_sdk.plugin_base import PluginBase as TapBaseClass
-from singer.schema import Schema
-
-import singer
-from singer import StateMessage
+from singer_sdk.singerlib import StateMessage, write_message
 
 REPLICATION_INCREMENTAL = "INCREMENTAL"
 REPLICATION_LOG_BASED = "LOG_BASED"
@@ -31,7 +28,7 @@ class ExactStream(RESTStream):
         self,
         tap: TapBaseClass,
         name: Optional[str] = None,
-        schema: Optional[Union[Dict[str, Any], Schema]] = None,
+        schema: Optional[Dict[str, Any]] = None,
         path: Optional[str] = None,
     ) -> None:
         super().__init__(tap, name=name, schema=schema, path=path)
@@ -324,4 +321,4 @@ class ExactStream(RESTStream):
                 if tap_state["bookmarks"][stream_name].get("partitions"):
                     tap_state["bookmarks"][stream_name]["partitions"] = []
 
-        singer.write_message(StateMessage(value=tap_state))
+        write_message(StateMessage(value=tap_state))

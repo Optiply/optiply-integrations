@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, Optional
 
-from singer_sdk.exceptions import FatalAPIError
+from hotglue_singer_sdk.exceptions import FatalAPIError
 
 from target_colleqtive.client import ColleqtiveSink
 

@@ -8,7 +8,7 @@ from typing import Dict
 
 import requests
 from requests.exceptions import RequestException
-from singer_sdk.exceptions import FatalAPIError
+from hotglue_singer_sdk.exceptions import FatalAPIError
 
 logger = logging.getLogger(__name__)
 

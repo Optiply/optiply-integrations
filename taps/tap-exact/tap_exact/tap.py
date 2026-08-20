@@ -1,8 +1,7 @@
-from typing import List, Type, Dict
+from typing import Dict, List, Type, final
 
 from singer_sdk import Stream, Tap
 from singer_sdk import typing as th
-from singer_sdk.helpers._compat import final
 from singer_sdk.streams import Stream
 
 from tap_exact.streams import (
@@ -104,7 +103,13 @@ class TapExact(Tap):
         self.config_file = (
             config[0] if isinstance(config, (list, tuple)) and config else None
         )
-        super().__init__(config, catalog, state, parse_env_config, validate_config)
+        super().__init__(
+            config=config,
+            catalog=catalog,
+            state=state,
+            parse_env_config=parse_env_config,
+            validate_config=validate_config,
+        )
 
 
     config_jsonschema = th.PropertiesList(

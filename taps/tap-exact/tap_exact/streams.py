@@ -621,7 +621,7 @@ class StockPositionsStream(ExactSyncStream):
 
 class LogisticsStockPositionsStream(ExactStream):
     name = "logistics_stock_positions"
-    primary_keys = ["ID"]
+    primary_keys = ["ItemId"]
     parent_stream_type = ItemsStream
     records_jsonpath = "$.StockPosition.element"
     path = "/read/logistics/StockPosition?itemId=guid'{item_id}'"
@@ -1745,7 +1745,7 @@ class BillOfMaterialDownloadStream(ExactStream):
     dont_use_current_division = True
 
     name = "bill_of_material_download"
-    primary_keys = ["ID"]
+    primary_keys = []
     records_jsonpath = "$.eExact.BillOfMaterials.[*]"
     replication_key = None
 
