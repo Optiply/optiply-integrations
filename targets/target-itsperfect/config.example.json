@@ -1,0 +1,7 @@
+{
+  "api_url": "https://your-domain.itsperfect.it",
+  "username": "your-username",
+  "password": "your-password",
+  "warehouse_id": 1,
+  "request_timeout_seconds": 60
+}

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "target-itsperfect"
+version = "0.1.0"
+description = "Replay-safe ItsPerfect Singer target for Optiply buy orders"
+authors = [{ name = "Optiply", email = "dev@optiply.com" }]
+requires-python = ">=3.9,<3.12"
+dependencies = [
+    "hotglue-singer-sdk",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+
+[project.scripts]
+target-itsperfect = "target_itsperfect.target:TargetItsPerfect.cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["target_itsperfect*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
