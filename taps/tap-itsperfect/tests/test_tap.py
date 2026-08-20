@@ -299,6 +299,10 @@ def test_purchase_and_put_lines_preserve_live_etl_fields():
     assert "price_rcy" in purchase_lines.schema["properties"]
     assert "purchase_price" not in purchase_lines.schema["properties"]
 
+    puts = stream("puts")
+    parent_row = puts.post_process({"id": 1, "quantity": "1.00"})
+    assert parent_row == {"id": 1, "quantity": 1.0}
+
     put_lines = stream("put_lines")
     row = put_lines.post_process(
         {"id": 3, "order_id": 2, "quantity": "1.00"},

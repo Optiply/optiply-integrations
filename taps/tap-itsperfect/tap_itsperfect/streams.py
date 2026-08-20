@@ -268,6 +268,11 @@ class PutsStream(ItsPerfectStream):
         }
     )
 
+    def post_process(self, row: dict, context=None):
+        if row.get("quantity") is not None:
+            row["quantity"] = float(row["quantity"])
+        return row
+
     def get_child_context(self, record: dict, context=None):
         return {"put_id": record["id"]}
 
