@@ -1,5 +1,7 @@
 """ItsPerfect tap entry point."""
 
+# pyright: reportMissingImports=false
+
 from hotglue_singer_sdk import Tap
 from hotglue_singer_sdk import typing as th
 from hotglue_singer_sdk.helpers.capabilities import AlertingLevel

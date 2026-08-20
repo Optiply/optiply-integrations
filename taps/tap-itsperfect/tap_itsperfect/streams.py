@@ -1,8 +1,10 @@
 """ItsPerfect stream definitions."""
 
+# pyright: reportAssignmentType=false, reportIncompatibleMethodOverride=false
+
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from tap_itsperfect.client import ItsPerfectStream
 
@@ -41,9 +43,9 @@ REFERENCE = {
 class ProductsStream(ItsPerfectStream):
     name = "products"
     path = "/items"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     replication_key = "last_update_timestamp"
-    query_params = {"includes": "colors,barcodes"}
+    query_params: ClassVar[dict[str, Any]] = dict(includes="colors,barcodes")
     schema = object_schema(
         {
             "id": ID,
@@ -72,7 +74,7 @@ class ProductsStream(ItsPerfectStream):
 class StocksStream(ItsPerfectStream):
     name = "stocks"
     path = "/stock"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     schema = object_schema(
         {
             "id": ID,
@@ -93,7 +95,7 @@ class StocksStream(ItsPerfectStream):
 class StoresStream(ItsPerfectStream):
     name = "stores"
     path = "/stores"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     schema = object_schema(
         {
             "id": ID,
@@ -107,7 +109,7 @@ class StoresStream(ItsPerfectStream):
 class WarehousesStream(ItsPerfectStream):
     name = "warehouses"
     path = "/warehouses"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     schema = object_schema(
         {
             "id": ID,
@@ -120,7 +122,7 @@ class WarehousesStream(ItsPerfectStream):
 class VendorsStream(ItsPerfectStream):
     name = "vendors"
     path = "/vendors"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     schema = object_schema(
         {
             "id": ID,
@@ -135,7 +137,7 @@ class VendorsStream(ItsPerfectStream):
 class SalesOrdersStream(ItsPerfectStream):
     name = "sales_orders"
     path = "/sales_orders"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     schema = object_schema(
         {
             "id": ID,
@@ -170,7 +172,7 @@ class SalesOrderLinesStream(ItsPerfectStream):
     name = "sales_order_lines"
     path = "/sales_orders/{sales_order_id}/lines"
     parent_stream_type = SalesOrdersStream
-    primary_keys = ["sales_order_id", "id"]
+    primary_keys: ClassVar[list[str]] = list(("sales_order_id", "id"))
     schema = object_schema(
         {
             "sales_order_id": ID,
@@ -199,7 +201,7 @@ class SalesOrderLinesStream(ItsPerfectStream):
 class PurchaseOrdersStream(ItsPerfectStream):
     name = "purchase_orders"
     path = "/purchase_orders"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     schema = object_schema(
         {
             "id": ID,
@@ -224,7 +226,7 @@ class PurchaseOrderLinesStream(ItsPerfectStream):
     name = "purchase_order_lines"
     path = "/purchase_orders/{purchase_order_id}/lines"
     parent_stream_type = PurchaseOrdersStream
-    primary_keys = ["purchase_order_id", "id"]
+    primary_keys: ClassVar[list[str]] = list(("purchase_order_id", "id"))
     schema = object_schema(
         {
             "purchase_order_id": ID,
@@ -237,7 +239,7 @@ class PurchaseOrderLinesStream(ItsPerfectStream):
             "quantity_ordered": NULLABLE_STRING,
             "quantity_to_receive": NULLABLE_STRING,
             "quantity_received": NULLABLE_STRING,
-            "purchase_price": NULLABLE_STRING,
+            "price_rcy": NULLABLE_STRING,
         }
     )
 
@@ -250,7 +252,7 @@ class PurchaseOrderLinesStream(ItsPerfectStream):
 class PutsStream(ItsPerfectStream):
     name = "puts"
     path = "/puts"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     schema = object_schema(
         {
             "id": ID,
@@ -274,11 +276,12 @@ class PutLinesStream(ItsPerfectStream):
     name = "put_lines"
     path = "/puts/{put_id}/lines"
     parent_stream_type = PutsStream
-    primary_keys = ["put_id", "id"]
+    primary_keys: ClassVar[list[str]] = list(("put_id", "id"))
     schema = object_schema(
         {
             "put_id": ID,
             "id": ID,
+            "order_id": ID,
             "item": REFERENCE,
             "color": REFERENCE,
             "size": REFERENCE,
@@ -297,7 +300,7 @@ class PutLinesStream(ItsPerfectStream):
 class QualitiesStream(ItsPerfectStream):
     name = "qualities"
     path = "/qualities"
-    primary_keys = ["id"]
+    primary_keys: ClassVar[list[str]] = list(("id",))
     schema = object_schema(
         {
             "id": ID,
@@ -314,7 +317,7 @@ class QualityCompositionsStream(ItsPerfectStream):
     name = "quality_compositions"
     path = "/qualities/{quality_id}/composition"
     parent_stream_type = QualitiesStream
-    primary_keys = ["quality_id", "id"]
+    primary_keys: ClassVar[list[str]] = list(("quality_id", "id"))
     schema = object_schema(
         {
             "quality_id": ID,

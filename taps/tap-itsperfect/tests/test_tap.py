@@ -1,12 +1,15 @@
+# pyright: reportArgumentType=false
+
 import json
 from urllib.parse import unquote
 from unittest.mock import Mock, patch
 from typing import cast
 
 import pytest
+from hotglue_etl_exceptions import InvalidCredentialsError
 from hotglue_singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from jsonschema import validate
-from tap_itsperfect.client import InvalidCredentialsError, ItsPerfectStream
+from tap_itsperfect.client import ItsPerfectStream
 from tap_itsperfect.tap import TapItsPerfect
 
 
@@ -289,3 +292,17 @@ def test_child_identity_and_nested_schema_are_preserved():
     assert request.url.startswith(
         "https://example.itsperfect.it/api/v3/sales_orders/7/lines?"
     )
+
+
+def test_purchase_and_put_lines_preserve_live_etl_fields():
+    purchase_lines = stream("purchase_order_lines")
+    assert "price_rcy" in purchase_lines.schema["properties"]
+    assert "purchase_price" not in purchase_lines.schema["properties"]
+
+    put_lines = stream("put_lines")
+    row = put_lines.post_process(
+        {"id": 3, "order_id": 2, "quantity": "1"},
+        {"put_id": 1},
+    )
+    assert row == {"id": 3, "order_id": 2, "quantity": "1", "put_id": 1}
+    assert put_lines.schema["properties"]["order_id"] == {"type": "integer"}

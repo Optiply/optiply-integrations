@@ -4,20 +4,20 @@ from __future__ import annotations
 
 import time
 from email.utils import parsedate_to_datetime
-from typing import Any
+from typing import Any, ClassVar
 
-import backoff
+import backoff  # pyright: ignore[reportMissingImports]
 import requests
+from hotglue_etl_exceptions import InvalidCredentialsError
 from hotglue_singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from hotglue_singer_sdk.streams import RESTStream
-from hotglue_singer_sdk.tap_base import InvalidCredentialsError  # pyright: ignore[reportPrivateImportUsage]
 
 
 class ItsPerfectStream(RESTStream):
     """Base stream for the read-only ItsPerfect v3 API."""
 
     records_jsonpath = "$[*]"
-    query_params: dict[str, Any] = {}
+    query_params: ClassVar[dict[str, Any]] = dict()
 
     @property
     def url_base(self) -> str:
