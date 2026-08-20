@@ -286,7 +286,7 @@ class PutLinesStream(ItsPerfectStream):
             "color": REFERENCE,
             "size": REFERENCE,
             "barcode": NULLABLE_STRING,
-            "quantity": NULLABLE_STRING,
+            "quantity": NULLABLE_NUMBER,
             "quantity_received": NULLABLE_STRING,
         }
     )
@@ -294,6 +294,8 @@ class PutLinesStream(ItsPerfectStream):
     def post_process(self, row: dict, context=None):
         assert context is not None
         row["put_id"] = context["put_id"]
+        if row.get("quantity") is not None:
+            row["quantity"] = float(row["quantity"])
         return row
 
 

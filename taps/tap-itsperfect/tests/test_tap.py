@@ -301,8 +301,11 @@ def test_purchase_and_put_lines_preserve_live_etl_fields():
 
     put_lines = stream("put_lines")
     row = put_lines.post_process(
-        {"id": 3, "order_id": 2, "quantity": "1"},
+        {"id": 3, "order_id": 2, "quantity": "1.00"},
         {"put_id": 1},
     )
-    assert row == {"id": 3, "order_id": 2, "quantity": "1", "put_id": 1}
+    assert row == {"id": 3, "order_id": 2, "quantity": 1.0, "put_id": 1}
     assert put_lines.schema["properties"]["order_id"] == {"type": "integer"}
+    assert put_lines.schema["properties"]["quantity"] == {
+        "type": ["number", "null"]
+    }
