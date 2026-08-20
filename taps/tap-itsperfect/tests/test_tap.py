@@ -294,7 +294,13 @@ def test_child_identity_and_nested_schema_are_preserved():
     )
 
 
-def test_sales_order_line_quantity_matches_catalog_contract():
+def test_sales_order_quantities_match_catalog_contracts():
+    sales_orders = stream("sales_orders")
+    parent_row = sales_orders.post_process(
+        {"id": 3, "status": 1, "quantity": "5.00"}
+    )
+    assert parent_row == {"id": 3, "status": "1", "quantity": 5.0}
+
     sales_lines = stream("sales_order_lines")
     row = sales_lines.post_process(
         {"id": 5, "quantity": 3},
