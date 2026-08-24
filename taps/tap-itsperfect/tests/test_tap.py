@@ -57,11 +57,17 @@ def test_discovery_contains_derived_streams_and_safe_replication():
         "quality_compositions",
     }
     assert tap.alerting_level.name == "WARNING"
-    assert tap.streams["products"].replication_key == "last_update_timestamp"
     assert {
-        name for name, stream_instance in tap.streams.items()
+        name: stream_instance.replication_key
+        for name, stream_instance in tap.streams.items()
         if stream_instance.replication_key
-    } == {"products"}
+    } == {
+        "products": "last_update_timestamp",
+        "stocks": "availability_timestamp",
+        "sales_orders": "last_update_timestamp",
+        "purchase_orders": "last_update_timestamp",
+        "puts": "last_update_timestamp",
+    }
 
 
 def test_credentials_are_secret_in_discovery_schema():
@@ -217,34 +223,56 @@ def test_pagination_rejects_missing_skipped_and_early_empty_pages():
         )
 
 
-def test_incremental_params_resume_from_state_marker():
-    products = stream("products")
+@pytest.mark.parametrize(
+    ("name", "replication_key"),
+    [
+        ("products", "last_update_timestamp"),
+        ("stocks", "availability_timestamp"),
+        ("sales_orders", "last_update_timestamp"),
+        ("purchase_orders", "last_update_timestamp"),
+        ("puts", "last_update_timestamp"),
+    ],
+)
+def test_incremental_params_resume_from_state_marker(name, replication_key):
+    incremental_stream = stream(name)
+    marker = "2026-01-02T03:04:05Z"
     with patch.object(
-        products,
+        incremental_stream,
         "get_starting_replication_key_value",
-        return_value="2026-01-02T03:04:05Z",
+        return_value=marker,
     ):
-        params = products.get_url_params(None, 4)
+        params = incremental_stream.get_url_params(None, 4)
     assert params == {
         "limit": 250,
         "page": 4,
-        "includes": "colors,barcodes",
-        "last_update_timestamp>": "2026-01-02T03:04:05Z",
+        **({"includes": "colors,barcodes"} if name == "products" else {}),
+        f"{replication_key}>": marker,
     }
     with patch.object(
-        products,
+        incremental_stream,
         "get_starting_replication_key_value",
-        return_value="2026-01-02T03:04:05Z",
-    ), patch.object(products, "_access_token", return_value="token"):
-        request = products.prepare_request(None, 4)
+        return_value=marker,
+    ), patch.object(incremental_stream, "_access_token", return_value="token"):
+        request = incremental_stream.prepare_request(None, 4)
     assert request.url is not None
-    assert "last_update_timestamp>=2026-01-02T03:04:05Z" in unquote(request.url)
+    assert f"{replication_key}>={marker}" in unquote(request.url)
 
 
 def test_incremental_records_require_a_non_null_marker():
+    for name, replication_key in {
+        "products": "last_update_timestamp",
+        "stocks": "availability_timestamp",
+        "sales_orders": "last_update_timestamp",
+        "purchase_orders": "last_update_timestamp",
+        "puts": "last_update_timestamp",
+    }.items():
+        record = {"id": 1, replication_key: None}
+        if name == "sales_orders":
+            record["status"] = 1
+        with pytest.raises(FatalAPIError, match="omitted replication key"):
+            stream(name).post_process(record)
+
     products = stream("products")
-    with pytest.raises(FatalAPIError, match="omitted replication key"):
-        products.post_process({"id": 1, "last_update_timestamp": None})
     record = {
         "id": 1,
         "status": 6,
@@ -266,8 +294,12 @@ def test_reference_status_codes_accept_live_integer_values():
 
 def test_sales_orders_keep_only_completed_and_cancelled_records():
     orders = stream("sales_orders")
-    sent = orders.post_process({"id": 1, "status": "1"})
-    cancelled = orders.post_process({"id": 2, "status": 2})
+    sent = orders.post_process(
+        {"id": 1, "status": "1", "last_update_timestamp": "2026-01-01"}
+    )
+    cancelled = orders.post_process(
+        {"id": 2, "status": 2, "last_update_timestamp": "2026-01-01"}
+    )
     assert sent is not None
     assert cancelled is not None
     assert cancelled["status"] == "2"
@@ -297,9 +329,19 @@ def test_child_identity_and_nested_schema_are_preserved():
 def test_sales_order_quantities_match_catalog_contracts():
     sales_orders = stream("sales_orders")
     parent_row = sales_orders.post_process(
-        {"id": 3, "status": 1, "quantity": "5.00"}
+        {
+            "id": 3,
+            "status": 1,
+            "quantity": "5.00",
+            "last_update_timestamp": "2026-01-01",
+        }
     )
-    assert parent_row == {"id": 3, "status": "1", "quantity": 5.0}
+    assert parent_row == {
+        "id": 3,
+        "status": "1",
+        "quantity": 5.0,
+        "last_update_timestamp": "2026-01-01",
+    }
 
     sales_lines = stream("sales_order_lines")
     row = sales_lines.post_process(
@@ -315,8 +357,14 @@ def test_purchase_and_put_lines_preserve_live_etl_fields():
     assert "purchase_price" not in purchase_lines.schema["properties"]
 
     puts = stream("puts")
-    parent_row = puts.post_process({"id": 1, "quantity": "1.00"})
-    assert parent_row == {"id": 1, "quantity": 1.0}
+    parent_row = puts.post_process(
+        {"id": 1, "quantity": "1.00", "last_update_timestamp": "2026-01-01"}
+    )
+    assert parent_row == {
+        "id": 1,
+        "quantity": 1.0,
+        "last_update_timestamp": "2026-01-01",
+    }
 
     put_lines = stream("put_lines")
     row = put_lines.post_process(

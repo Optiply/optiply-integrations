@@ -75,6 +75,7 @@ class StocksStream(ItsPerfectStream):
     name = "stocks"
     path = "/stock"
     primary_keys: ClassVar[list[str]] = list(("id",))
+    replication_key = "availability_timestamp"
     schema = object_schema(
         {
             "id": ID,
@@ -87,8 +88,9 @@ class StocksStream(ItsPerfectStream):
             "available_stock": NULLABLE_STRING,
             "economical_stock": NULLABLE_STRING,
             "virtual_stock_reservation": NULLABLE_STRING,
-            "availability_timestamp": NULLABLE_STRING,
-        }
+            "availability_timestamp": STRING,
+        },
+        required=["id", "availability_timestamp"],
     )
 
 
@@ -138,6 +140,7 @@ class SalesOrdersStream(ItsPerfectStream):
     name = "sales_orders"
     path = "/sales_orders"
     primary_keys: ClassVar[list[str]] = list(("id",))
+    replication_key = "last_update_timestamp"
     schema = object_schema(
         {
             "id": ID,
@@ -153,8 +156,9 @@ class SalesOrdersStream(ItsPerfectStream):
             "quantity": NULLABLE_NUMBER,
             "date_cancelled": NULLABLE_STRING,
             "date_shipped": NULLABLE_STRING,
-            "last_update_timestamp": NULLABLE_STRING,
-        }
+            "last_update_timestamp": STRING,
+        },
+        required=["id", "last_update_timestamp"],
     )
 
     def post_process(self, row: dict, context=None):
@@ -206,6 +210,7 @@ class PurchaseOrdersStream(ItsPerfectStream):
     name = "purchase_orders"
     path = "/purchase_orders"
     primary_keys: ClassVar[list[str]] = list(("id",))
+    replication_key = "last_update_timestamp"
     schema = object_schema(
         {
             "id": ID,
@@ -218,8 +223,9 @@ class PurchaseOrdersStream(ItsPerfectStream):
             "eta": NULLABLE_STRING,
             "expected_receipt_date": NULLABLE_STRING,
             "reference": NULLABLE_STRING,
-            "last_update_timestamp": NULLABLE_STRING,
-        }
+            "last_update_timestamp": STRING,
+        },
+        required=["id", "last_update_timestamp"],
     )
 
     def get_child_context(self, record: dict, context=None):
@@ -257,6 +263,7 @@ class PutsStream(ItsPerfectStream):
     name = "puts"
     path = "/puts"
     primary_keys: ClassVar[list[str]] = list(("id",))
+    replication_key = "last_update_timestamp"
     schema = object_schema(
         {
             "id": ID,
@@ -268,14 +275,15 @@ class PutsStream(ItsPerfectStream):
             "warehouse": REFERENCE,
             "quantity": NULLABLE_NUMBER,
             "reference": NULLABLE_STRING,
-            "last_update_timestamp": NULLABLE_STRING,
-        }
+            "last_update_timestamp": STRING,
+        },
+        required=["id", "last_update_timestamp"],
     )
 
     def post_process(self, row: dict, context=None):
         if row.get("quantity") is not None:
             row["quantity"] = float(row["quantity"])
-        return row
+        return super().post_process(row, context)
 
     def get_child_context(self, record: dict, context=None):
         return {"put_id": record["id"]}

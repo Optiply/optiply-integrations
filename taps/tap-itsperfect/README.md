@@ -5,26 +5,26 @@ Read-only Singer tap for the ItsPerfect v3 API, built with `hotglue_singer_sdk`.
 ## Streams
 
 | Stream | Endpoint | Primary key | Replication | Coverage |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `products` | `/api/v3/items?includes=colors,barcodes` | `id` | `last_update_timestamp` | Products and variants/barcodes |
-| `stocks` | `/api/v3/stock` | `id` | Full table | Stock by item and warehouse |
+| `stocks` | `/api/v3/stock` | `id` | `availability_timestamp` | Stock by item and warehouse |
 | `stores` | `/api/v3/stores` | `id` | Full table | Store/location reference |
 | `warehouses` | `/api/v3/warehouses` | `id` | Full table | Warehouse reference |
 | `vendors` | `/api/v3/vendors` | `id` | Full table | Suppliers |
-| `sales_orders` | `/api/v3/sales_orders` | `id` | Full table | Sent (`1`) and cancelled (`2`) orders |
-| `sales_order_lines` | `/api/v3/sales_orders/{id}/lines` | `sales_order_id,id` | Parent-scoped | Order/product join |
-| `purchase_orders` | `/api/v3/purchase_orders` | `id` | Full table | Purchase orders |
-| `purchase_order_lines` | `/api/v3/purchase_orders/{id}/lines` | `purchase_order_id,id` | Parent-scoped | Purchase-order items |
-| `puts` | `/api/v3/puts` | `id` | Full table | Receipts/item deliveries |
-| `put_lines` | `/api/v3/puts/{id}/lines` | `put_id,id` | Parent-scoped | Receipt items |
+| `sales_orders` | `/api/v3/sales_orders` | `id` | `last_update_timestamp` | Sent (`1`) and cancelled (`2`) orders |
+| `sales_order_lines` | `/api/v3/sales_orders/{id}/lines` | `sales_order_id,id` | Incremental parent-scoped | Order/product join |
+| `purchase_orders` | `/api/v3/purchase_orders` | `id` | `last_update_timestamp` | Purchase orders |
+| `purchase_order_lines` | `/api/v3/purchase_orders/{id}/lines` | `purchase_order_id,id` | Incremental parent-scoped | Purchase-order items |
+| `puts` | `/api/v3/puts` | `id` | `last_update_timestamp` | Receipts/item deliveries |
+| `put_lines` | `/api/v3/puts/{id}/lines` | `put_id,id` | Incremental parent-scoped | Receipt items |
 | `qualities` | `/api/v3/qualities` | `id` | Full table | Product quality reference |
 | `quality_compositions` | `/api/v3/qualities/{id}/composition` | `quality_id,id` | Parent-scoped | Material compositions |
 
 ItsPerfect documents page-number pagination through `X-Pagination-*` headers. The tap stops at the documented page count and fails on missing or non-progressing pagination. Authentication tokens are cached until shortly before expiry. Permanent 4xx responses are fatal; only network failures, 429, and documented transient 5xx responses are retried with finite backoff.
 
-Products use an inclusive `last_update_timestamp` resume filter, so boundary records may repeat rather than be missed. Sales orders, purchase orders, and puts remain full-table because the API does not document that child-line changes advance the parent timestamp; this guarantees child traversal.
+Incremental streams use inclusive resume filters, so boundary records may repeat rather than be missed. Bounded read-only API checks confirmed `last_update_timestamp` filtering for products, sales orders, purchase orders, and puts, plus `availability_timestamp` filtering for stocks. Child lines are traversed for parents returned by the incremental parent stream.
 
-The API does not document a separate product BOM endpoint or deletion/change feed. Product status and active fields are emitted so downstream processing can handle disabled records. Full-table streams are intentional where a stable marker or parent/child cascade guarantee is not documented.
+Stores, warehouses, vendors, and qualities remain full-table because their records expose no stable source cursor. The API does not document a separate product BOM endpoint or deletion/change feed. Product status and active fields are emitted so downstream processing can handle disabled records.
 
 ## Local use
 
