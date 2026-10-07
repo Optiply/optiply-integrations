@@ -3,8 +3,20 @@
 import json
 from datetime import datetime, timezone
 
+import requests
+
 from hotglue_singer_sdk.exceptions import FatalAPIError
 from target_vendit.client import VenditSink
+
+
+def _key(value):
+    """Normalise an order reference or product id for matching ("6199106.0" -> "6199106")."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if text.endswith(".0"):
+        text = text[:-2]
+    return text or None
 
 
 def _first_present(*values):
@@ -170,6 +182,42 @@ class BuyOrders(VenditSink):
 
     endpoint = "PrePurchaseOrders/Import"
     name = "BuyOrders"
+    _existing_lines = None
+
+    def existing_vendit_lines(self) -> set:
+        """(order reference, productId) pairs Vendit already has, read once per run.
+
+        A buy order is sent line by line, so a failed line cannot be fixed by resending the
+        whole order: the lines that succeeded would be imported again. Lines still on the
+        pre-purchase list and lines on open purchase orders (pre-purchase lines already
+        ordered) are skipped instead. Lines of orders already fully delivered in Vendit are
+        not on either list.
+        """
+        if self._existing_lines is None:
+            existing = set()
+            pre_purchase_lines = self.request_api("GET", "PrePurchaseOrders/GetAll").json().get("items") or []
+            for line in pre_purchase_lines:
+                for reference in {_key(line.get("optiplyId")), _key(line.get("orderReference"))} - {None}:
+                    existing.add((reference, _key(line.get("productId"))))
+
+            # Open purchase orders live outside /VenditPublicApi; 0 = every open order
+            api_url = self.config.get("api_url", "https://api2.vendit.online").rstrip("/")
+            response = requests.get(f"{api_url}/Optiply/GetProductPurchaseOrdersFromDate/0", headers=self.http_headers)
+            self.validate_response(response)
+            open_orders = response.json().get("items") or []
+            for order in open_orders:
+                details = order.get("details") or []
+                if isinstance(details, dict):
+                    details = details.get("items") or []
+                for reference in {_key(order.get("optiplyId")), _key(order.get("orderReference"))} - {None}:
+                    for line in details:
+                        existing.add((reference, _key(line.get("productId"))))
+
+            self.logger.info(
+                f"[BuyOrders] Read {len(pre_purchase_lines)} pre-purchase lines and {len(open_orders)} open purchase orders from Vendit"
+            )
+            self._existing_lines = existing
+        return self._existing_lines
 
     def process_record(self, record: dict, context: dict) -> None:
         """Process a record by splitting line_items and sending each as a separate request."""
@@ -266,6 +314,10 @@ class BuyOrders(VenditSink):
             )
             if not product_id:
                 self.logger.warning(f"Line item missing productId, skipping: {line_item}")
+                continue
+
+            if optiply_id and (_key(optiply_id), _key(product_id)) in self.existing_vendit_lines():
+                self.logger.info(f"[BuyOrders] Order {optiply_id}: product {product_id} is already in Vendit, skipping")
                 continue
 
             # Get amount/quantity
