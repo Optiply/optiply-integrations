@@ -200,9 +200,9 @@ class BuyOrders(VenditSink):
                 for reference in {_key(line.get("optiplyId")), _key(line.get("orderReference"))} - {None}:
                     existing.add((reference, _key(line.get("productId"))))
 
-            # Open purchase orders live outside /VenditPublicApi; 0 = every open order
+            # Open purchase orders live outside /VenditPublicApi; from-date 1 ms = every open order (0 is rejected)
             api_url = self.config.get("api_url", "https://api2.vendit.online").rstrip("/")
-            response = requests.get(f"{api_url}/Optiply/GetProductPurchaseOrdersFromDate/0", headers=self.http_headers)
+            response = requests.get(f"{api_url}/Optiply/GetProductPurchaseOrdersFromDate/1", headers=self.http_headers)
             self.validate_response(response)
             open_orders = response.json().get("items") or []
             for order in open_orders:
