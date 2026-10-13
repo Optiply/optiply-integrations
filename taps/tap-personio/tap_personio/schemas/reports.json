@@ -1,0 +1,106 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "edited_at": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "date_time": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "timezone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "created_at": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "date_time": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "timezone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "last_viewed_at": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "date_time": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "timezone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "chart_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "person": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "is_shared_with_anyone": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    }
+  }
+}

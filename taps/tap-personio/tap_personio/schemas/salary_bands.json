@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "min": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "max": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "middle": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "currency": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "workplaces": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

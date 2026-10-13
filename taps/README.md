@@ -29,3 +29,4 @@ taps/tap-<slug>/
 - `tap-extend`
 - `tap-fathom`
 - `tap-hotglue`
+- `tap-personio`

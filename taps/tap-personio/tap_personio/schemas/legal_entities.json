@@ -1,0 +1,256 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "is_main": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "valid_from": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "assigned_employees": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "active": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "total": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "country": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "registration_number": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "industry_sector": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "email": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "phone": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "address": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "street_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "house_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "postal_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "city": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "contact_person": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "salutation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "full_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "email": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "phone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fax": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "bank_details": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "iban": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bic": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "account_holder": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "mailing_address": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "street_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "house_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "postal_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "city": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "additional_info": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "address_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "country": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "po_box_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

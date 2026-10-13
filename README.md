@@ -37,6 +37,7 @@ Example: `extend` uses `taps/tap-extend/`, `etl/extend/`, and `docs/extend/`.
 | Extend Commerce / Lxir | Tap + ETL + mapping docs | [`tap-extend`](taps/tap-extend/) | external/none in repo | [`etl/extend`](etl/extend/) | [`docs/extend`](docs/extend/) |
 | Fathom | Tap implementation | [`tap-fathom`](taps/tap-fathom/) | — | — | — |
 | HotGlue Platform API | Tap implementation | [`tap-hotglue`](taps/tap-hotglue/) | — | — | — |
+| Personio (HR, internal use) | Tap implementation | [`tap-personio`](taps/tap-personio/) | — | — | — |
 
 Use this table as the source of truth for what has landed in this repo. If a tap, target, ETL, or doc is still external, link it or say `external`; do not leave readers guessing.
 

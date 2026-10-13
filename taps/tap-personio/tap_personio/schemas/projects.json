@@ -1,0 +1,155 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "project_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cost_center": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "assigned_to_all": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "parent_project": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "start": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        }
+      }
+    },
+    "end": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        }
+      }
+    },
+    "billable": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "client_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "project_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "tracked_minutes": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "sub_projects_tracked_minutes": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "sub_projects_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "tracked_periods_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  }
+}

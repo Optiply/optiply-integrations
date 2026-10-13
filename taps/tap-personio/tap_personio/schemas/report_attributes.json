@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "display": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "data_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "filtering": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "segmenting": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    }
+  }
+}

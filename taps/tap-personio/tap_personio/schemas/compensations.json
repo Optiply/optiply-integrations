@@ -1,0 +1,103 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "person": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "legal_entity": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "type": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "effective_from": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "amount": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "interval": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "weekly_working_hours": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "full_time_weekly_working_hours": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  }
+}
