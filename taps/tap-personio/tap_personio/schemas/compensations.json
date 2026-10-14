@@ -1,6 +1,12 @@
 {
   "type": "object",
   "properties": {
+    "window_start_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "id": {
       "type": [
         "string",

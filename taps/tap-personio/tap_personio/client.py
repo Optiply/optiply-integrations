@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import parse_qsl, urlparse
@@ -207,6 +207,36 @@ class IncrementalPersonioStream(PersonioStream):
         if parse_timestamp(value) > self.sync_started_at:
             return None
         return row
+
+
+class PerPersonStream(PersonioStream):
+    """One listing per Personio person.
+
+    The person IDs come from a full person listing made once per run (see
+    `TapPersonio.person_ids`), not from the `persons` stream, so `persons` can be
+    incremental without hiding changes to records that do not bump a person's
+    `updated_at`.
+    """
+
+    def get_records(self, context: dict | None) -> Iterable[dict]:
+        for person_id in self._tap.person_ids():
+            person_context = {"person_id": person_id}
+            for row in self.request_records(person_context):
+                row = self.post_process(row, person_context)
+                if row is not None:
+                    yield row
+
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
+        row = super().post_process(row, context)
+        if row is not None:
+            row["person_id"] = context["person_id"]
+        return row
+
+
+def months_before(day: date, months: int) -> date:
+    """First day of the month `months` calendar months before `day`'s month."""
+    index = day.year * 12 + (day.month - 1) - months
+    return date(index // 12, index % 12 + 1, 1)
 
 
 def month_windows(start: datetime, end: datetime) -> Iterable[dict[str, str]]:

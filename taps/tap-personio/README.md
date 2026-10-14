@@ -9,6 +9,7 @@ Singer tap for the [Personio API v2](https://developer.personio.de/reference/int
 | `client_id` | yes | Personio API credential client ID. |
 | `client_secret` | yes (secret) | Personio API credential client secret. |
 | `start_date` | yes | Lower bound for incremental streams on the first run, and the first month read for `compensations`. |
+| `compensations_lookback_months` | no (default 3) | Months before the last `compensations` window that each run re-reads, to catch back-dated changes. |
 
 Auth uses the OAuth 2.0 client-credentials grant (`POST /v2/auth/token`). The tap mints one token per run, keeps it in memory, and shares it across all streams. Each Personio API credential grants read scopes per resource. Deselect any stream whose scope the credential lacks: a 403 response fails the run and names the stream.
 
@@ -18,10 +19,10 @@ See `config.json.example`.
 
 | Stream | Endpoint | Primary key | Replication | Notes |
 | --- | --- | --- | --- | --- |
-| `persons` | `/v2/persons` | `id` | full table | Parent of `employments` and `documents`. |
-| `employments` | `/v2/persons/{id}/employments` | `id` | full table | Adds `person_id`. |
-| `documents` | `/v2/document-management/documents?owner_id=` | `id` | full table | Metadata only, per person. Adds `person_id`. |
-| `compensations` | `/v2/compensations` | `id` | full table | Calendar-month windows (the API maximum) from `start_date` through the current month. |
+| `persons` | `/v2/persons` | `id` | incremental `updated_at` | `updated_at.gt`. |
+| `employments` | `/v2/persons/{id}/employments` | `id` | incremental `updated_at` | Read for every person (see below), filtered with `updated_at.gt`. Adds `person_id`. |
+| `documents` | `/v2/document-management/documents?owner_id=` | `id` | full table | Metadata only, read for every person. Personio filters documents only by `created_at`, which would miss edits. Adds `person_id`. |
+| `compensations` | `/v2/compensations` | `id` | incremental `window_start_date` | Calendar-month windows (the API maximum). Compensations have no change timestamp; each record gets the `window_start_date` it was read for, and each run re-reads from `compensations_lookback_months` before the last window through the current month. An active compensation appears in every month it applies to. |
 | `compensation_types` | `/v2/compensations/types` | `id` | full table | |
 | `absence_types` | `/v2/absence-types` | `id` | full table | |
 | `absence_periods` | `/v2/absence-periods` | `id` | incremental `updated_at` | `updated_at.gte` / `.lte`. |
@@ -55,7 +56,9 @@ Not extracted:
 
 - **Pagination:** the tap follows `_meta.links.next.href` cursors and sends the stream's filters on every page. Recruiting endpoints return a `next` link without a cursor on their last page; that ends the listing only when the page is shorter than the requested limit, otherwise the stream fails. A cursor that repeats within one listing fails the stream, and so does a body without a `_data` list.
 - **Incremental sync:** the lower bound is the bookmark, or `start_date` on the first run. Records updated after the sync started are skipped and picked up next run, so the bookmark never passes unread data. Recruiting endpoints only allow an exclusive `updated_at.gt` with no upper bound, so the tap re-reads 1 second before the bookmark and drops later records client-side. A record without its replication value fails the stream.
+- **Per-person streams:** `employments` and `documents` list every person once per run (unfiltered `/v2/persons`, not the `persons` stream), so a change to an employment or document is read even when the person's own `updated_at` did not change.
 - **Full-table child streams:** these keep no per-parent state entries.
+- **Deletes:** incremental streams never report deleted records, because Personio has no deleted-record feed.
 - **HTTP errors:**
   - 401 raises `InvalidCredentialsError` and is not retried.
   - 400, 403, 404 and other 4xx responses are fatal.

@@ -13,7 +13,7 @@ import requests
 from hotglue_etl_exceptions import InvalidCredentialsError
 from hotglue_singer_sdk.exceptions import FatalAPIError
 
-from tap_personio.client import month_windows
+from tap_personio.client import month_windows, months_before
 from tap_personio.tap import TapPersonio
 
 CONFIG = {"client_id": "test-id", "client_secret": "test-secret", "start_date": "2024-01-01T00:00:00Z"}
@@ -123,6 +123,9 @@ def test_discovery_exposes_every_stream_with_keys_and_replication():
     assert incremental == {
         "absence_periods",
         "attendance_periods",
+        "compensations",
+        "employments",
+        "persons",
         "recruiting_applications",
         "recruiting_candidates",
         "recruiting_jobs",
@@ -347,17 +350,34 @@ def test_record_without_replication_value_fails_closed(api):
 # Parent/child
 
 
-def test_children_read_every_person_and_carry_parent_id(api):
-    api.add("/v2/persons", page([{"id": "p1"}, {"id": "p2"}]))
-    api.add("/v2/persons/p1/employments", page([{"id": "e1"}]))
-    api.add("/v2/persons/p2/employments", page([{"id": "e2"}]))
+def test_per_person_streams_cover_every_person_while_persons_is_incremental(api):
+    def persons(r):
+        if "updated_at.gt" in query(r):  # the incremental `persons` stream
+            return page([{"id": "p2", "updated_at": "2024-06-02T00:00:00Z"}])
+        return page([{"id": "p1"}, {"id": "p2"}])  # the unfiltered person directory
+
+    api.add("/v2/persons", persons)
+    api.add("/v2/persons/p1/employments", page([{"id": "e1", "updated_at": "2024-06-03T00:00:00Z"}]))
+    api.add("/v2/persons/p2/employments", page([]))
     api.add("/v2/document-management/documents", lambda r: page([{"id": f"d-{query(r)['owner_id']}"}]))
-    messages = run_tap({"employments", "documents"})
-    assert records(messages, "persons") == []
-    assert {(r["id"], r["person_id"]) for r in records(messages, "employments")} == {("e1", "p1"), ("e2", "p2")}
+    state = {
+        "bookmarks": {
+            "persons": {"replication_key": "updated_at", "replication_key_value": "2024-06-01T00:00:00Z"},
+            "employments": {"replication_key": "updated_at", "replication_key_value": "2024-06-01T00:00:00Z"},
+        }
+    }
+    messages = run_tap({"persons", "employments", "documents"}, state=state)
+
+    assert [r["id"] for r in records(messages, "persons")] == ["p2"]
+    # p1 did not change as a person, but its employment did: it is still read.
+    assert [(r["id"], r["person_id"]) for r in records(messages, "employments")] == [("e1", "p1")]
+    for call in api.calls_to("/v2/persons/p1/employments") + api.calls_to("/v2/persons/p2/employments"):
+        assert query(call)["updated_at.gt"] == "2024-05-31T23:59:59Z"
     assert {(r["id"], r["person_id"]) for r in records(messages, "documents")} == {("d-p1", "p1"), ("d-p2", "p2")}
+    assert len([c for c in api.calls_to("/v2/persons") if "updated_at.gt" not in query(c)]) == 1
     bookmarks = last_state(messages)["bookmarks"]
-    assert "partitions" not in bookmarks.get("employments", {})
+    assert bookmarks["persons"]["replication_key_value"] == "2024-06-02T00:00:00Z"
+    assert bookmarks["employments"]["replication_key_value"] == "2024-06-03T00:00:00Z"
     assert "partitions" not in bookmarks.get("documents", {})
 
 
@@ -392,11 +412,23 @@ def test_month_windows_cover_calendar_months_across_year_end():
     ]
 
 
-def test_compensations_request_each_month_window(api):
+def test_compensations_first_run_reads_from_start_date_and_bookmarks_last_window(api):
     api.add("/v2/compensations", lambda r: page([{"id": f"c-{query(r)['start_date']}"}]))
     start = datetime.now(timezone.utc).replace(day=1)
     config = {**CONFIG, "start_date": start.strftime("%Y-%m-%dT00:00:00Z")}
-    rows = records(run_tap({"compensations"}, config=config), "compensations")
+    messages = run_tap({"compensations"}, config=config)
     expected = start.strftime("%Y-%m-01")
-    assert [r["id"] for r in rows] == [f"c-{expected}"]
+    assert [(r["id"], r["window_start_date"]) for r in records(messages, "compensations")] == [(f"c-{expected}", expected)]
     assert query(api.calls_to("/v2/compensations")[0])["start_date"] == expected
+    assert last_state(messages)["bookmarks"]["compensations"]["replication_key_value"] == expected
+
+
+def test_compensations_resume_from_bookmark_minus_lookback(api):
+    api.add("/v2/compensations", lambda r: page([{"id": f"c-{query(r)['start_date']}"}]))
+    current = datetime.now(timezone.utc).date().replace(day=1)
+    state = {"bookmarks": {"compensations": {"replication_key": "window_start_date", "replication_key_value": current.isoformat()}}}
+    config = {**CONFIG, "compensations_lookback_months": 2}
+    messages = run_tap({"compensations"}, state=state, config=config)
+    requested = [query(c)["start_date"] for c in api.calls_to("/v2/compensations")]
+    assert requested == [months_before(current, n).isoformat() for n in (2, 1, 0)]
+    assert last_state(messages)["bookmarks"]["compensations"]["replication_key_value"] == current.isoformat()

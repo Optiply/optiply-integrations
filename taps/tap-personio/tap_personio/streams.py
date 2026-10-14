@@ -2,44 +2,58 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
-from tap_personio.client import IncrementalPersonioStream, PersonioStream, month_windows
+from tap_personio.client import (
+    IncrementalPersonioStream,
+    PerPersonStream,
+    PersonioStream,
+    month_windows,
+    months_before,
+)
 
 # People
 
 
-class PersonsStream(PersonioStream):
-    """Full table: every person is the parent of `employments` and `documents`, whose
-    changes are not documented to bump the person's `updated_at`."""
+class PersonDirectory(PersonioStream):
+    """Every person, unfiltered. Not a catalog stream: it supplies the person IDs that
+    `employments` and `documents` are read for (`TapPersonio.person_ids`)."""
 
     name = "persons"
     path = "/v2/persons"
-    primary_keys = ["id"]
     page_size = 50
 
-    def get_child_context(self, record: dict, context: dict | None) -> dict:
-        return {"person_id": record["id"]}
+
+class PersonsStream(IncrementalPersonioStream):
+    name = "persons"
+    path = "/v2/persons"
+    primary_keys = ["id"]
+    replication_key = "updated_at"
+    page_size = 50
+    lower_bound_param = "updated_at.gt"
+    lower_bound_exclusive = True
+    upper_bound_param = None
 
 
-class EmploymentsStream(PersonioStream):
+class EmploymentsStream(PerPersonStream, IncrementalPersonioStream):
+    """Read for every person, filtered to employments changed since the bookmark."""
+
     name = "employments"
-    parent_stream_type = PersonsStream
     path = "/v2/persons/{person_id}/employments"
     primary_keys = ["id"]
+    replication_key = "updated_at"
     page_size = 50
+    lower_bound_param = "updated_at.gt"
+    lower_bound_exclusive = True
+    upper_bound_param = None
 
-    def post_process(self, row: dict, context: dict | None = None) -> dict:
-        row["person_id"] = context["person_id"]
-        return row
 
-
-class DocumentsStream(PersonioStream):
-    """Document metadata per person (file downloads are not extracted)."""
+class DocumentsStream(PerPersonStream):
+    """Document metadata for every person (file downloads are not extracted). Full
+    table: Personio only filters documents by `created_at`, which misses edits."""
 
     name = "documents"
-    parent_stream_type = PersonsStream
     path = "/v2/document-management/documents"
     primary_keys = ["id"]
     page_size = 200
@@ -47,25 +61,38 @@ class DocumentsStream(PersonioStream):
     def get_filter_params(self, context: dict | None) -> dict[str, Any]:
         return {"owner_id": context["person_id"]}
 
-    def post_process(self, row: dict, context: dict | None = None) -> dict:
-        row["person_id"] = context["person_id"]
-        return row
-
 
 class CompensationsStream(PersonioStream):
-    """Payroll compensations, read in calendar-month windows (the API's maximum)
-    from `start_date` through the current month, every run."""
+    """Payroll compensations, read in calendar-month windows (the API's maximum).
+
+    Compensations carry no change timestamp, and an active one is returned in every
+    month it applies to. Each record gets the `window_start_date` it was read for;
+    the bookmark is the last window read, and the next run starts
+    `compensations_lookback_months` before it to catch back-dated changes.
+    """
 
     name = "compensations"
     path = "/v2/compensations"
     primary_keys = ["id"]
+    replication_key = "window_start_date"
+    declared_replication_method = "INCREMENTAL"
     page_size = 100
 
     def get_paging_windows(self, context: dict | None) -> list[dict[str, str]]:
-        return list(month_windows(self.get_config_start_date(), datetime.now(timezone.utc)))
+        start = self.get_config_start_date()
+        bookmark = self.get_starting_replication_key_value(context)
+        if bookmark:
+            lookback = int(self.config.get("compensations_lookback_months", 3))
+            resume = months_before(date.fromisoformat(bookmark[:10]), lookback)
+            start = max(start, datetime(resume.year, resume.month, 1, tzinfo=timezone.utc))
+        return list(month_windows(start, datetime.now(timezone.utc)))
 
     def get_filter_params(self, context: dict | None) -> dict[str, Any]:
         return {"start_date": context["start_date"], "end_date": context["end_date"]}
+
+    def post_process(self, row: dict, context: dict | None = None) -> dict:
+        row["window_start_date"] = context["start_date"]
+        return row
 
 
 class CompensationTypesStream(PersonioStream):
