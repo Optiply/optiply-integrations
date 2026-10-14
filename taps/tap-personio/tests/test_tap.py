@@ -381,6 +381,25 @@ def test_per_person_streams_cover_every_person_while_persons_is_incremental(api)
     assert "partitions" not in bookmarks.get("documents", {})
 
 
+def test_stale_full_table_catalog_reads_incremental_streams_in_full(api):
+    # Catalog saved before persons/employments became incremental (Hotglue job iizdomh6wm4n0oik321pg).
+    api.add("/v2/persons", page([{"id": "p1", "updated_at": "2024-06-02T00:00:00Z"}]))
+    api.add("/v2/persons/p1/employments", page([{"id": "e1"}]))
+    tap = make_tap({"persons", "employments"})
+    catalog = tap.catalog_dict
+    for entry in catalog["streams"]:
+        if entry["tap_stream_id"] in {"persons", "employments"}:
+            entry.pop("replication_key", None)
+            entry["replication_method"] = "FULL_TABLE"
+    tap = TapPersonio(config=CONFIG, catalog=catalog, state={})
+    messages = sync(tap, io.StringIO())
+
+    assert [r["id"] for r in records(messages, "persons")] == ["p1"]
+    assert [(r["id"], r["person_id"]) for r in records(messages, "employments")] == [("e1", "p1")]
+    for call in api.calls_to("/v2/persons") + api.calls_to("/v2/persons/p1/employments"):
+        assert not any(k.startswith("updated_at") for k in query(call))
+
+
 def test_project_members_get_composite_identity(api):
     api.add("/v2/projects", page([{"id": "pr1"}]))
     api.add("/v2/projects/pr1/members", page([{"person": {"id": "p9"}}]))

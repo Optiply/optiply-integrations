@@ -185,6 +185,8 @@ class IncrementalPersonioStream(PersonioStream):
         self.sync_started_at = datetime.now(timezone.utc).replace(microsecond=0)
 
     def get_filter_params(self, context: dict | None) -> dict[str, Any]:
+        if not self.replication_key:  # catalog selected FULL_TABLE: read everything
+            return {}
         start = self.get_starting_timestamp(context) or self.get_config_start_date()
         if self.lower_bound_exclusive:
             # `.gt` is exclusive at second precision: step back 1s so ties with the
@@ -200,6 +202,8 @@ class IncrementalPersonioStream(PersonioStream):
 
     def post_process(self, row: dict, context: dict | None = None) -> dict | None:
         value = self.replication_value(row)
+        if not self.replication_key:
+            return row
         if value is None:
             raise FatalAPIError(
                 f"Record {row.get('id')!r} in stream '{self.name}' has no {self.replication_key}."
