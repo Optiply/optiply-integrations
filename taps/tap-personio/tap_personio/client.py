@@ -134,12 +134,17 @@ class PersonioStream(RESTStream):
     def get_next_page_token(self, response: requests.Response, previous_token: Any) -> str | None:
         if previous_token is None:
             self._seen_cursors = set()
-        meta = response.json().get("_meta") or {}
+        body = response.json()
+        meta = body.get("_meta") or {}
         href = ((meta.get("links") or {}).get("next") or {}).get("href")
         if not href:
             return None
         cursor = dict(parse_qsl(urlparse(href).query)).get("cursor")
         if not cursor:
+            # Recruiting endpoints return a cursor-less `next` link on their last page.
+            # Only a page shorter than the requested limit proves the list is exhausted.
+            if self.page_size and len(body["_data"]) < self.page_size:
+                return None
             raise FatalAPIError(f"Personio next link has no cursor for {self._error_path(response)}")
         if cursor in self._seen_cursors:
             raise RuntimeError(f"Personio returned an already visited cursor for stream '{self.name}'.")

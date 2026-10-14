@@ -53,7 +53,7 @@ Not extracted:
 
 ## Behavior
 
-- **Pagination:** the tap follows `_meta.links.next.href` cursors and sends the stream's filters on every page. A cursor that repeats within one listing fails the stream, and so does a body without a `_data` list.
+- **Pagination:** the tap follows `_meta.links.next.href` cursors and sends the stream's filters on every page. Recruiting endpoints return a `next` link without a cursor on their last page; that ends the listing only when the page is shorter than the requested limit, otherwise the stream fails. A cursor that repeats within one listing fails the stream, and so does a body without a `_data` list.
 - **Incremental sync:** the lower bound is the bookmark, or `start_date` on the first run. Records updated after the sync started are skipped and picked up next run, so the bookmark never passes unread data. Recruiting endpoints only allow an exclusive `updated_at.gt` with no upper bound, so the tap re-reads 1 second before the bookmark and drops later records client-side. A record without its replication value fails the stream.
 - **Full-table child streams:** these keep no per-parent state entries.
 - **HTTP errors:**

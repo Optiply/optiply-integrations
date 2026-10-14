@@ -241,6 +241,32 @@ def test_empty_first_page_terminates(api):
     assert len(api.calls_to("/v2/cost-centers")) == 1
 
 
+def _cursorless_next(records: list[dict], path: str) -> tuple:
+    status, body, headers = page(records, None, path)
+    body["_meta"]["links"]["next"] = {"href": f"{API}{path}"}
+    return status, body, headers
+
+
+def _application(id_: str) -> dict:
+    return {"id": id_, "updated_at": {"date-time": "2024-03-01T10:00:00Z", "timezone": "UTC"}}
+
+
+def test_cursorless_next_link_on_short_last_page_ends_pagination(api):
+    path = "/v2/recruiting/applications"
+    full = [_application(str(i)) for i in range(200)]
+    api.add(path, page(full, "c2", path), _cursorless_next([_application("last")], path))
+    rows = records(run_tap({"recruiting_applications"}), "recruiting_applications")
+    assert len(rows) == 201
+    assert len(api.calls_to(path)) == 2
+
+
+def test_cursorless_next_link_on_full_page_fails(api):
+    path = "/v2/recruiting/applications"
+    api.add(path, _cursorless_next([_application(str(i)) for i in range(200)], path))
+    with pytest.raises(FatalAPIError, match="no cursor"):
+        run_tap({"recruiting_applications"})
+
+
 def test_repeated_cursor_is_rejected(api):
     api.add(
         "/v2/cost-centers",
