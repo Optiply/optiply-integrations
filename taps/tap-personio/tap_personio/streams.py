@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
-from typing import Any
+from typing import Any, Iterable
+
+import requests
+from hotglue_singer_sdk.exceptions import FatalAPIError
 
 from tap_personio.client import (
     IncrementalPersonioStream,
@@ -304,6 +307,25 @@ class RecruitingCategoriesStream(PersonioStream):
     primary_keys = ["id"]
 
 
+class EmployeeAttributesStream(PersonioStream):
+    """Label, type and list options of every employee attribute the credential may read,
+    keyed like `persons.custom_attributes[].id` (`dynamic_*`). v2 has no equivalent, so
+    this is the v1 endpoint (formerly `/custom-attributes`); it is not paginated."""
+
+    name = "employee_attributes"
+    path = "/v1/company/employees/attributes"
+    primary_keys = ["key"]
+
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        try:
+            body = response.json()
+        except ValueError as ex:
+            raise FatalAPIError(f"Non-JSON Personio response for {self._error_path(response)}") from ex
+        if not isinstance(body, dict) or body.get("success") is not True or not isinstance(body.get("data"), list):
+            raise FatalAPIError(f"Malformed Personio response for {self._error_path(response)}")
+        yield from body["data"]
+
+
 STREAM_TYPES = [
     PersonsStream,
     EmploymentsStream,
@@ -324,6 +346,7 @@ STREAM_TYPES = [
     SalaryBandsStream,
     ReportsStream,
     ReportAttributesStream,
+    EmployeeAttributesStream,
     RecruitingApplicationsStream,
     RecruitingApplicationStageTransitionsStream,
     RecruitingCandidatesStream,

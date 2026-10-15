@@ -113,7 +113,7 @@ def last_state(messages: list[dict]) -> dict:
 def test_discovery_exposes_every_stream_with_keys_and_replication():
     catalog = TapPersonio(config=CONFIG).catalog_dict
     by_name = {s["tap_stream_id"]: s for s in catalog["streams"]}
-    assert len(by_name) == 24
+    assert len(by_name) == 25
     incremental = {
         name
         for name, s in by_name.items()
@@ -398,6 +398,28 @@ def test_stale_full_table_catalog_reads_incremental_streams_in_full(api):
     assert [(r["id"], r["person_id"]) for r in records(messages, "employments")] == [("e1", "p1")]
     for call in api.calls_to("/v2/persons") + api.calls_to("/v2/persons/p1/employments"):
         assert not any(k.startswith("updated_at") for k in query(call))
+
+
+def test_employee_attributes_define_custom_attribute_ids(api):
+    api.add(
+        "/v1/company/employees/attributes",
+        (200, {"success": True, "data": [
+            {"key": "hire_date", "label": "Hire date", "type": "date", "universal_id": "hire_date", "options": []},
+            {"key": "dynamic_2", "label": "Marital status", "type": "list", "universal_id": None, "options": ["married", "single"]},
+        ]}, {}),
+    )
+    messages = run_tap({"employee_attributes"})
+    rows = {r["key"]: r for r in records(messages, "employee_attributes")}
+    assert rows["dynamic_2"]["label"] == "Marital status"
+    assert rows["dynamic_2"]["options"] == ["married", "single"]
+    assert rows.keys() == {"hire_date", "dynamic_2"}
+    assert len(api.calls_to("/v1/company/employees/attributes")) == 1
+
+
+def test_employee_attributes_unsuccessful_body_fails(api):
+    api.add("/v1/company/employees/attributes", (200, {"success": False, "error": {"message": "nope"}}, {}))
+    with pytest.raises(FatalAPIError, match="Malformed Personio response"):
+        run_tap({"employee_attributes"})
 
 
 def test_project_members_get_composite_identity(api):

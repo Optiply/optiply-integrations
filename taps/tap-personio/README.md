@@ -38,6 +38,7 @@ See `config.json.example`.
 | `salary_bands` | `/v2/salary-bands` | `id` | full table | |
 | `reports` | `/v2/reports` | `id` | full table | Report definitions only. |
 | `report_attributes` | `/v2/reports/attributes` | `name` | full table | |
+| `employee_attributes` | `/v1/company/employees/attributes` | `key` | full table | Labels, types and list options for employee attributes. `key` matches `persons.custom_attributes[].id` (`dynamic_*`), which v2 returns without a label. v1 endpoint (formerly `/custom-attributes`), since v2 has no equivalent. Not paginated. |
 | `recruiting_applications` | `/v2/recruiting/applications` | `id` | incremental `updated_at_date_time` | `updated_at` is an object; its `date-time` is copied to `updated_at_date_time`. |
 | `recruiting_application_stage_transitions` | `/v2/recruiting/applications/{id}/stage-transitions` | `application_id`, `entered_at` | full table, child | Personio gives transitions no ID. |
 | `recruiting_candidates` | `/v2/recruiting/candidates` | `id` | incremental `updated_at` | |
