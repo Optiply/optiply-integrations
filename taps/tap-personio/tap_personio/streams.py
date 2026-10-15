@@ -76,7 +76,7 @@ class CompensationsStream(PersonioStream):
 
     name = "compensations"
     path = "/v2/compensations"
-    primary_keys = ["id"]
+    primary_keys = ["id", "window_start_date"]
     replication_key = "window_start_date"
     declared_replication_method = "INCREMENTAL"
     page_size = 100
